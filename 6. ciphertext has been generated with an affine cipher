@@ -1,0 +1,28 @@
+Write a C program for ciphertext has been generated with an affine cipher. The most frequent letter of
+the ciphertext is “B,” and the second most frequent letter of the ciphertext is “U.”Break this code.
+
+#include<stdio.h>
+
+int modInverse(int a,int m){
+  for(int x=1;x<m;x++)
+    if((a*x)%m==1)
+      return x;
+  return -1;
+}
+char affineDecrypt(char c,int a_inv,int b){
+    if(c>='A'&&c<='Z')return 'A'+(a_inv*(c-'A'-b+26))%26;
+    if(c>='a'&&c<='z')return 'a'+(a_inv*(c-'a'-b+26))%26;
+    return c;
+}
+void decryptText(char*text,int a_inv,int b){
+    for(int i=0;text[i]!='\0';i++)text[i]=affineDecrypt(text[i],a_inv,b);
+}
+int main(){
+    int a=9,b=1;
+    int a_inv=modInverse(a,26);
+    if(a_inv==-1){printf("Invalid 'a' value. Choose an 'a' coprime with 26.\n");return 1;}
+    char text[]="BUUB";
+    decryptText(text,a_inv,b);
+    printf("Decrypted Text: %s",text);
+    return 0;
+}

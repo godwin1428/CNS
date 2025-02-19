@@ -1,0 +1,23 @@
+Write a C program for monoalphabetic substitution cipher maps a plaintext alphabet to a ciphertext
+alphabet, so that each letter of the plaintext alphabet maps to a single unique letter of the ciphertext
+alphabet.
+
+#include<stdio.h>
+#include<string.h>
+
+void monoalphabeticCipher(char *text,const char *key){
+    for(int i=0;text[i]!='\0';i++){
+        if(text[i]>='A'&&text[i]<='Z')
+            text[i]=key[text[i]-'A'];
+        else if(text[i]>='a'&&text[i]<='z')
+            text[i]=key[text[i]-'a']+('a'-'A');
+    }
+}
+
+int main(){
+    char text[]="HELLO";
+    const char key[]="QWERTYUIOPASDFGHJKLZXCVBNM";
+    monoalphabeticCipher(text,key);
+    printf("Encrypted Text: %s",text);
+    return 0;
+}

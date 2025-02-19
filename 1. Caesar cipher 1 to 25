@@ -1,0 +1,26 @@
+Write a C program for Caesar cipher involves replacing each letter of the alphabet with the letter
+standing k places further down the alphabet, for k in the range 1 through 25.
+
+#include<stdio.h>
+#include<string.h>
+void encrypt(char*s,int k){
+	for(int i=0;s[i];i++){
+		if(s[i]>='A'&&s[i]<='Z')s[i]='A'+(s[i]-'A'+k)%26;
+		else if(s[i]>='a'&&s[i]<='z')s[i]='a'+(s[i]-'a'+k)%26;
+	}
+}
+int main(){
+	char s[100];
+	int k;
+	printf("Enter text: ");
+	scanf("%[^"]",s);
+	printf("Enter key(1-25): ");
+	scanf("%d",&k);
+	if(k<1||k>25){
+		printf("Invalid key");
+		return 0;
+	}
+	encrypt(s,k);
+	printf("Encrypted text: %s",s);
+	return 0;
+}

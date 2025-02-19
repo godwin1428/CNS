@@ -1,0 +1,32 @@
+Write a C program for generalization of the Caesar cipher, known as the affine Caesar cipher, has the
+following form: For each plaintext letter p, substitute the ciphertext letter C: C = E([a, b], p) = (ap + b)
+mod 26 A basic requirement of any encryption algorithm is that it be one-to-one. That is, if p q, then
+E(k, p) E(k, q). Otherwise, decryption is impossible, because more than one plaintext character maps into
+the same ciphertext character. The affine Caesar cipher is not one-to-one for all values of a. For example,
+for a = 2 and b = 3, then E([a, b], 0) = E([a, b], 13) = 3.
+a. Are there any limitations on the value of b?
+b. Determine which values of a are not allowed.
+
+#include<stdio.h>
+#include<string.h>
+
+int gcd(int a,int b){return b==0?a:gcd(b,a%b);}
+
+char affineEncrypt(char p,int a,int b){
+    if(p>='A'&&p<='Z')return 'A'+(a*(p-'A')+b)%26;
+    if(p>='a'&&p<='z')return 'a'+(a*(p-'a')+b)%26;
+    return p;
+}
+
+void encryptText(char*text,int a,int b){
+    for(int i=0;text[i]!='\0';i++)text[i]=affineEncrypt(text[i],a,b);
+}
+
+int main(){
+    int a=5,b=8;
+    if(gcd(a,26)!=1){printf("Invalid 'a' value. Choose an 'a' coprime with 26.\n");return 1;}
+    char text[]="HELLO";
+    encryptText(text,a,b);
+    printf("Encrypted Text: %s",text);
+    return 0;
+}

@@ -1,0 +1,23 @@
+Write a C program for polyalphabetic substitution cipher uses a separate monoalphabetic substitution
+cipher for each successive letter of plaintext, depending on a key.
+
+#include<stdio.h>
+#include<string.h>
+
+void polyalphabeticEncrypt(char *text,const char *key){
+    int textLen=strlen(text),keyLen=strlen(key);
+    for(int i=0;i<textLen;i++){
+        if(text[i]>='A'&&text[i]<='Z')
+            text[i]='A'+(text[i]-'A'+(key[i%keyLen]-'A'))%26;
+        else if(text[i]>='a'&&text[i]<='z')
+            text[i]='a'+(text[i]-'a'+(key[i%keyLen]-'a'))%26;
+    }
+}
+
+int main(){
+    char text[]="HELLO";
+    const char key[]="KEY";
+    polyalphabeticEncrypt(text,key);
+    printf("Encrypted Text: %s",text);
+    return 0;
+}

@@ -1,0 +1,68 @@
+Write a C program for Playfair algorithm is based on the use of a 5 X 5 matrix of letters constructed
+using a keyword. Plaintext is encrypted two letters at a time using this matrix.
+
+#include<stdio.h>
+#include<string.h>
+
+#define SIZE 5
+char keySquare[SIZE][SIZE];
+
+void generateKeySquare(char *key){
+    int flag[26]={0},k=0;
+    char modifiedKey[26];
+    strcpy(modifiedKey,key);
+    for(int i=0;modifiedKey[i]!='\0';i++){
+        if(modifiedKey[i]=='J')modifiedKey[i]='I';
+        if(!flag[modifiedKey[i]-'A']){
+            keySquare[k/SIZE][k%SIZE]=modifiedKey[i];
+            flag[modifiedKey[i]-'A']=1;
+            k++;
+        }
+    }
+    for(int i=0;i<26;i++){
+        if(i+'A'=='J')continue;
+        if(!flag[i]){
+            keySquare[k/SIZE][k%SIZE]=i+'A';
+            k++;
+        }
+    }
+}
+
+void findPosition(char ch,int *row,int *col){
+    for(int i=0;i<SIZE;i++){
+        for(int j=0;j<SIZE;j++){
+            if(keySquare[i][j]==ch){
+                *row=i;
+                *col=j;
+                return;
+            }
+        }
+    }
+}
+
+void playfairEncrypt(char *text){
+    int r1,c1,r2,c2;
+    for(int i=0;text[i]!='\0';i+=2){
+        findPosition(text[i],&r1,&c1);
+        findPosition(text[i+1],&r2,&c2);
+        if(r1==r2){
+            text[i]=keySquare[r1][(c1+1)%SIZE];
+            text[i+1]=keySquare[r2][(c2+1)%SIZE];
+        }else if(c1==c2){
+            text[i]=keySquare[(r1+1)%SIZE][c1];
+            text[i+1]=keySquare[(r2+1)%SIZE][c2];
+        }else{
+            text[i]=keySquare[r1][c2];
+            text[i+1]=keySquare[r2][c1];
+        }
+    }
+}
+
+int main(){
+    char text[]="HELLOXWORLD";
+    char key[]="KEYWORD";
+    generateKeySquare(key);
+    playfairEncrypt(text);
+    printf("Encrypted Text: %s",text);
+    return 0;
+}

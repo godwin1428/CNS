@@ -1,0 +1,84 @@
+9. Write a C program for PT-109 American patrol boat, under the command of Lieutenant John F.  
+Kennedy, was sunk by a Japanese destroyer, a message was received at an Australian wireless station in  
+Playfair code:  
+KXJEY UREBE ZWEHE WRYTU HEYFS  
+KREHE GOYFI WTTTU OLKSY CAJPO  
+BOTEI ZONTX BYBNT GONEY CUZWR  
+GDSON SXBOU YWRHE BAAHY USEDQ 
+
+
+#include <stdio.h>
+#include <string.h>
+
+#define SIZE 5
+
+// Function to generate Playfair cipher matrix
+void generateMatrix(char *key, char matrix[SIZE][SIZE]) {
+    int used[26] = {0}; 
+    int row = 0, col = 0;
+    
+    for (int i = 0; key[i] != '\0'; i++) {
+        char ch = (key[i] == 'J') ? 'I' : key[i]; 
+        if (!used[ch - 'A']) {
+            matrix[row][col++] = ch;
+            used[ch - 'A'] = 1;
+            if (col == SIZE) { row++; col = 0; }
+        }
+    }
+
+    for (char ch = 'A'; ch <= 'Z'; ch++) {
+        if (ch == 'J') continue;
+        if (!used[ch - 'A']) {
+            matrix[row][col++] = ch;
+            used[ch - 'A'] = 1;
+            if (col == SIZE) { row++; col = 0; }
+        }
+    }
+}
+
+// Function to find position of a character in the matrix
+void findPosition(char matrix[SIZE][SIZE], char ch, int *row, int *col) {
+    if (ch == 'J') ch = 'I';
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            if (matrix[i][j] == ch) { *row = i; *col = j; return; }
+}
+
+// Function to decrypt a pair of characters
+void decryptPair(char matrix[SIZE][SIZE], char *a, char *b) {
+    int r1, c1, r2, c2;
+    findPosition(matrix, *a, &r1, &c1);
+    findPosition(matrix, *b, &r2, &c2);
+
+    if (r1 == r2) { 
+        *a = matrix[r1][(c1 + SIZE - 1) % SIZE]; 
+        *b = matrix[r2][(c2 + SIZE - 1) % SIZE];
+    } 
+    else if (c1 == c2) { 
+        *a = matrix[(r1 + SIZE - 1) % SIZE][c1]; 
+        *b = matrix[(r2 + SIZE - 1) % SIZE][c2];
+    } 
+    else { 
+        *a = matrix[r1][c2]; 
+        *b = matrix[r2][c1];
+    }
+}
+
+// Function to decrypt the text
+void decryptText(char *text, char matrix[SIZE][SIZE]) {
+    for (int i = 0; text[i] != '\0'; i += 2)
+        decryptPair(matrix, &text[i], &text[i + 1]);
+}
+
+// Main function
+int main() {
+    char key[] = "CIPHER"; 
+    char matrix[SIZE][SIZE];
+    generateMatrix(key, matrix);
+
+    char text[] = "KXJEYUREBEZWEHEWRYTUHEYFSKREHEGOYFIWTTTUOLKSYCAJPOBOTEIZONTXBYBNTGONECUZWRGDSONSXBOUYWRHEBAAHYUSEDQ"; 
+    decryptText(text, matrix);
+
+    printf("Decrypted Text: %s\n", text);
+    return 0;
+}

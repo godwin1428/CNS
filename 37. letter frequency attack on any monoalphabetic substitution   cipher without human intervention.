@@ -1,0 +1,73 @@
+37. Write a C program that can perform a letter frequency attack on any monoalphabetic substitution  
+cipher without human intervention. Your software should produce possible plaintexts in rough order of  
+likelihood. It would be good if your user interface allowed the user to specify “give me the top 10  
+possible plaintexts.” 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// English letter frequency (approximate)
+const char frequency_order[] = "ETAOINSHRDLCUMWFGYPBVKJXQZ";
+
+// Function to count letter frequencies in ciphertext
+void count_frequencies(const char *ciphertext, int freq[26]) {
+    memset(freq, 0, 26 * sizeof(int));
+    for (int i = 0; ciphertext[i]; i++) {
+        if (isalpha(ciphertext[i]))
+            freq[toupper(ciphertext[i]) - 'A']++;
+    }
+}
+
+// Function to generate a frequency-based substitution key
+void generate_key(int freq[26], char key[26]) {
+    int sorted_indices[26];
+    
+    // Initialize indices 0-25
+    for (int i = 0; i < 26; i++) sorted_indices[i] = i;
+
+    // Sort indices based on frequency count (descending order)
+    for (int i = 0; i < 25; i++) {
+        for (int j = i + 1; j < 26; j++) {
+            if (freq[sorted_indices[i]] < freq[sorted_indices[j]]) {
+                int temp = sorted_indices[i];
+                sorted_indices[i] = sorted_indices[j];
+                sorted_indices[j] = temp;
+            }
+        }
+    }
+
+    // Map the most frequent letters to English frequency order
+    for (int i = 0; i < 26; i++)
+        key[sorted_indices[i]] = frequency_order[i];
+}
+
+// Function to decrypt ciphertext using the generated key
+void decrypt(const char *ciphertext, char *plaintext, char key[26]) {
+    for (int i = 0; ciphertext[i]; i++) {
+        if (isalpha(ciphertext[i])) {
+            char is_lower = islower(ciphertext[i]);
+            char decrypted = key[toupper(ciphertext[i]) - 'A'];
+            plaintext[i] = is_lower ? tolower(decrypted) : decrypted;
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[strlen(ciphertext)] = '\0';
+}
+
+int main() {
+    char ciphertext[] = "WKLV LV D WHVW PHVVDJH";
+    int freq[26];
+    char key[26], plaintext[100];
+
+    count_frequencies(ciphertext, freq);
+    generate_key(freq, key);
+    decrypt(ciphertext, plaintext, key);
+
+    printf("Ciphertext: %s\n", ciphertext);
+    printf("Decrypted Text (Best Guess): %s\n", plaintext);
+    
+    return 0;
+}

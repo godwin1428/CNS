@@ -1,0 +1,84 @@
+38. Write a C program for Hill cipher succumbs to a known plaintext attack if sufficient plaintext– 
+ciphertext pairs are provided. It is even easier to solve the Hill cipher if a chosen plaintext attack can be  
+mounted. Implement in C programming. 
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define N 2  // Size of the Hill cipher key matrix
+
+// Function to calculate modular inverse (Extended Euclidean Algorithm)
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1)
+            return x;
+    }
+    return -1; // No modular inverse
+}
+
+// Function to compute determinant of a 2x2 matrix
+int determinant(int matrix[N][N]) {
+    return (matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]) % 26;
+}
+
+// Function to compute the inverse of a 2x2 matrix mod 26
+void inverseMatrix(int matrix[N][N], int inverse[N][N]) {
+    int det = determinant(matrix);
+    if (det < 0) det += 26;
+
+    int det_inv = modInverse(det, 26);
+    if (det_inv == -1) {
+        printf("Matrix is not invertible (no modular inverse).\n");
+        exit(1);
+    }
+
+    // Compute inverse using adjugate method
+    inverse[0][0] = (matrix[1][1] * det_inv) % 26;
+    inverse[0][1] = (-matrix[0][1] * det_inv) % 26;
+    inverse[1][0] = (-matrix[1][0] * det_inv) % 26;
+    inverse[1][1] = (matrix[0][0] * det_inv) % 26;
+
+    // Ensure values are positive mod 26
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            if (inverse[i][j] < 0)
+                inverse[i][j] += 26;
+}
+
+// Function to multiply two matrices mod 26
+void multiplyMatrices(int A[N][N], int B[N][N], int result[N][N]) {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            result[i][j] = 0;
+            for (int k = 0; k < N; k++) {
+                result[i][j] += A[i][k] * B[k][j];
+            }
+            result[i][j] %= 26;
+        }
+    }
+}
+
+int main() {
+    int plaintext[N][N] = {{7, 8}, {11, 11}};  // "HI" and "LL"
+    int ciphertext[N][N] = {{19, 7}, {11, 4}}; // Corresponding ciphertext
+
+    int inverse_plaintext[N][N];
+    int key_matrix[N][N];
+
+    // Compute inverse of plaintext matrix
+    inverseMatrix(plaintext, inverse_plaintext);
+
+    // Compute key matrix: K = (C * P^(-1)) mod 26
+    multiplyMatrices(ciphertext, inverse_plaintext, key_matrix);
+
+    printf("Recovered Key Matrix:\n");
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            printf("%d ", key_matrix[i][j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}

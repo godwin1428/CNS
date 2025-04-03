@@ -1,0 +1,63 @@
+29. Write a C program for SHA-3 option with a block size of 1024 bits and assume that each of the lanes  
+in the first message block (P0) has at least one nonzero bit. To start, all of the lanes in the internal state  
+matrix that correspond to the capacity portion of the initial state are all zeros. Show how long it will take  
+before all of these lanes have at least one nonzero bit. Note: Ignore the permutation. That is, keep track  of 
+the original zero lanes even after they have changed position in the matrix. 
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define ROWS 5
+#define COLS 5
+#define LANE_BITS 64
+#define RATE_BITS 1024
+#define CAPACITY_BITS 576
+#define TOTAL_LANES (ROWS * COLS)
+
+// Function to simulate lane updates (random nonzero bits in initially zero lanes)
+void update_capacity_lanes(unsigned long long state[ROWS][COLS], int *zero_lanes) {
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
+            int lane_index = i * COLS + j;
+            if (zero_lanes[lane_index]) {
+                if (rand() % 5 == 0) { // 20% chance of getting a nonzero bit
+                    state[i][j] = (unsigned long long)rand() | 1; // Ensure at least one bit is set
+                    zero_lanes[lane_index] = 0; // Mark lane as nonzero
+                }
+            }
+        }
+    }
+}
+
+// Function to check if all initially zero lanes are now nonzero
+int all_lanes_nonzero(int *zero_lanes) {
+    for (int i = 0; i < TOTAL_LANES; i++) {
+        if (zero_lanes[i]) return 0;
+    }
+    return 1;
+}
+
+int main() {
+    srand(time(NULL));
+
+    unsigned long long state[ROWS][COLS] = {0};
+    int zero_lanes[TOTAL_LANES] = {0};
+    int rounds = 0;
+
+    // Mark initially zero lanes (Capacity portion starts as zero)
+    for (int i = (RATE_BITS / LANE_BITS); i < TOTAL_LANES; i++) {
+        zero_lanes[i] = 1;
+    }
+
+    // Track rounds until all zero lanes become nonzero
+    while (!all_lanes_nonzero(zero_lanes)) {
+        update_capacity_lanes(state, zero_lanes);
+        rounds++;
+    }
+
+    printf("All capacity lanes became nonzero after %d rounds.\n", rounds);
+
+    return 0;
+}

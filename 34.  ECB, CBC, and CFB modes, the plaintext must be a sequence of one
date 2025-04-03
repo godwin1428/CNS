@@ -1,0 +1,94 @@
+34. Write a C program for ECB, CBC, and CFB modes, the plaintext must be a sequence of one or more 
+complete data blocks (or, for CFB mode, data segments). In other words, for these three modes, the total  
+number of bits in the plaintext must be a positive multiple of the block (or segment) size. One common  
+method of padding, if needed, consists of a 1 bit followed by as few zero bits, possibly none, as are  
+necessary to complete the final block. It is considered good practice for the sender to pad every message,  
+including messages in which the final message block is already complete. What is the motivation for  
+including a padding block when padding is not needed?  
+
+
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
+#define BLOCK_SIZE 8  // 64-bit block size
+
+// Sample Key
+uint8_t key[BLOCK_SIZE] = {0x13, 0x34, 0x57, 0x79, 0x9B, 0xBC, 0xDF, 0xF1};
+
+// Dummy Block Cipher (XOR-based for simplicity)
+void block_cipher(uint8_t *block, uint8_t *key) {
+    for (int i = 0; i < BLOCK_SIZE; i++)
+        block[i] ^= key[i];
+}
+
+// Padding Function (1 followed by 0s)
+int pad_message(uint8_t *message, int length) {
+    int padded_length = (length / BLOCK_SIZE + 1) * BLOCK_SIZE;
+    message[length] = 0x80;  // 1 bit followed by zeros
+    for (int i = length + 1; i < padded_length; i++)
+        message[i] = 0x00;
+    return padded_length;
+}
+
+// ECB Mode
+void ecb_encrypt(uint8_t *plaintext, uint8_t *ciphertext, int length) {
+    for (int i = 0; i < length; i += BLOCK_SIZE) {
+        memcpy(ciphertext + i, plaintext + i, BLOCK_SIZE);
+        block_cipher(ciphertext + i, key);
+    }
+}
+
+// CBC Mode
+void cbc_encrypt(uint8_t *plaintext, uint8_t *ciphertext, int length, uint8_t *iv) {
+    uint8_t previous[BLOCK_SIZE];
+    memcpy(previous, iv, BLOCK_SIZE);
+    for (int i = 0; i < length; i += BLOCK_SIZE) {
+        for (int j = 0; j < BLOCK_SIZE; j++) plaintext[i + j] ^= previous[j];
+        memcpy(ciphertext + i, plaintext + i, BLOCK_SIZE);
+        block_cipher(ciphertext + i, key);
+        memcpy(previous, ciphertext + i, BLOCK_SIZE);
+    }
+}
+
+// CFB Mode
+void cfb_encrypt(uint8_t *plaintext, uint8_t *ciphertext, int length, uint8_t *iv) {
+    uint8_t feedback[BLOCK_SIZE];
+    memcpy(feedback, iv, BLOCK_SIZE);
+    for (int i = 0; i < length; i += BLOCK_SIZE) {
+        block_cipher(feedback, key);
+        for (int j = 0; j < BLOCK_SIZE; j++)
+            ciphertext[i + j] = plaintext[i + j] ^ feedback[j];
+        memcpy(feedback, ciphertext + i, BLOCK_SIZE);
+    }
+}
+
+// Print Hex Data
+void print_hex(const char *label, uint8_t *data, int len) {
+    printf("%s: ", label);
+    for (int i = 0; i < len; i++) printf("%02X ", data[i]);
+    printf("\n");
+}
+
+int main() {
+    uint8_t plaintext[64] = "HelloWorld123456";  // Example plaintext
+    uint8_t ciphertext[64] = {0};
+    uint8_t iv[BLOCK_SIZE] = {0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0};
+
+    int length = strlen((char *)plaintext);
+    int padded_length = pad_message(plaintext, length);
+
+    ecb_encrypt(plaintext, ciphertext, padded_length);
+    print_hex("ECB Ciphertext", ciphertext, padded_length);
+
+    memcpy(plaintext, "HelloWorld123456", length);
+    cbc_encrypt(plaintext, ciphertext, padded_length, iv);
+    print_hex("CBC Ciphertext", ciphertext, padded_length);
+
+    memcpy(plaintext, "HelloWorld123456", length);
+    cfb_encrypt(plaintext, ciphertext, padded_length, iv);
+    print_hex("CFB Ciphertext", ciphertext, padded_length);
+
+    return 0;
+}
+

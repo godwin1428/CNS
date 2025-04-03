@@ -1,0 +1,69 @@
+33.Write a C program for Data encryption standard (DES) has been found vulnerable to very powerful  
+attacks and therefore, the popularity of DES has been found slightly on the decline. DES is a block  
+cipher and encrypts data in blocks of size of 64 bits each, which means 64 bits of plain text go as the  
+input to DES, which produces 64 bits of ciphertext. The same algorithm and key are used for  encryption 
+and decryption, with minor differences. The key length is 56 bits. Implement in C  programming. 
+
+
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#define BLOCK_SIZE 8  // 64-bit block size
+#define KEY_SIZE 8     // 56-bit key
+#define ROUNDS 16      // 16 DES rounds
+
+// Sample Key Schedule (Dummy Example)
+void generate_keys(uint8_t *key, uint8_t subkeys[16][6]) {
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 6; j++) {
+            subkeys[i][j] = key[j] ^ (i + 1);
+        }
+    }
+}
+
+// Feistel Function (Dummy Example)
+void feistel(uint8_t *half_block, uint8_t *subkey) {
+    for (int i = 0; i < 4; i++) {
+        half_block[i] ^= subkey[i];
+    }
+}
+
+// DES Encryption/Decryption
+void des_encrypt(uint8_t *block, uint8_t subkeys[16][6], int decrypt) {
+    uint8_t left[4], right[4], temp[4];
+    memcpy(left, block, 4);
+    memcpy(right, block + 4, 4);
+
+    for (int i = 0; i < ROUNDS; i++) {
+        int round = decrypt ? (15 - i) : i;
+        memcpy(temp, right, 4);
+        feistel(temp, subkeys[round]);
+        for (int j = 0; j < 4; j++) left[j] ^= temp[j];
+        memcpy(block, right, 4);
+        memcpy(block + 4, left, 4);
+    }
+}
+
+// Print Data in Hex Format
+void print_hex(const char *label, uint8_t *data, int len) {
+    printf("%s: ", label);
+    for (int i = 0; i < len; i++) printf("%02X ", data[i]);
+    printf("\n");
+}
+
+int main() {
+    uint8_t key[KEY_SIZE] = {0x13, 0x34, 0x57, 0x79, 0x9B, 0xBC, 0xDF, 0xF1};
+    uint8_t block[BLOCK_SIZE] = "ABCDEFGH";  // Example plaintext
+    uint8_t subkeys[16][6];
+
+    generate_keys(key, subkeys);
+
+    des_encrypt(block, subkeys, 0);  // Encrypt
+    print_hex("Ciphertext", block, BLOCK_SIZE);
+
+    des_encrypt(block, subkeys, 1);  // Decrypt
+    print_hex("Decrypted", block, BLOCK_SIZE);
+
+    return 0;
+}

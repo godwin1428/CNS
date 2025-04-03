@@ -1,0 +1,89 @@
+15. Write a C program that can perform a letter frequency attack on an additive cipher without human  
+intervention. Your software should produce possible plaintexts in rough order of likelihood. It would be  
+good if your user interface allowed the user to specify “give me the top 10 possible plaintexts.”  
+
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+#define ALPHABET_SIZE 26
+#define MAX_CIPHERTEXT_LENGTH 1024
+
+// English letter frequency (approximate percentages)
+const double english_freq[ALPHABET_SIZE] = {
+    8.2, 1.5, 2.8, 4.3, 13.0, 2.2, 2.0, 6.1, 7.0, 0.2,
+    0.8, 4.0, 2.4, 6.7, 7.5, 1.9, 0.1, 6.0, 6.3, 9.1,
+    2.8, 1.0, 2.4, 0.2, 2.0, 0.1
+};
+
+// Function to compute letter frequency score for a given plaintext
+double compute_score(const char *text) {
+    int letter_count[ALPHABET_SIZE] = {0};
+    int total_letters = 0;
+    double score = 0.0;
+    
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (isalpha(text[i])) {
+            letter_count[tolower(text[i]) - 'a']++;
+            total_letters++;
+        }
+    }
+    
+    if (total_letters == 0) return 0;
+    
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        double observed_freq = (double)letter_count[i] / total_letters * 100;
+        score += observed_freq * english_freq[i];
+    }
+    
+    return score;
+}
+
+// Function to decrypt a Caesar cipher with a given key
+void decrypt_caesar(const char *ciphertext, int key, char *plaintext) {
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        if (isalpha(ciphertext[i])) {
+            char base = isupper(ciphertext[i]) ? 'A' : 'a';
+            plaintext[i] = ((ciphertext[i] - base - key + ALPHABET_SIZE) % ALPHABET_SIZE) + base;
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[strlen(ciphertext)] = '\0';
+}
+
+// Structure to store key-score pairs
+typedef struct {
+    int key;
+    double score;
+    char plaintext[MAX_CIPHERTEXT_LENGTH];
+} DecryptionCandidate;
+
+// Comparison function for sorting candidates
+int compare_candidates(const void *a, const void *b) {
+    double diff = ((DecryptionCandidate *)b)->score - ((DecryptionCandidate *)a)->score;
+    return (diff > 0) ? 1 : (diff < 0) ? -1 : 0;
+}
+
+int main() {
+    char ciphertext[MAX_CIPHERTEXT_LENGTH] = "Wklv lv d whvw phvvdjh.";
+    int top_n = 10; // Number of top results to display
+    DecryptionCandidate candidates[ALPHABET_SIZE];
+    
+    for (int key = 0; key < ALPHABET_SIZE; key++) {
+        decrypt_caesar(ciphertext, key, candidates[key].plaintext);
+        candidates[key].key = key;
+        candidates[key].score = compute_score(candidates[key].plaintext);
+    }
+    
+    qsort(candidates, ALPHABET_SIZE, sizeof(DecryptionCandidate), compare_candidates);
+    
+    printf("Top %d possible plaintexts:\n", top_n);
+    for (int i = 0; i < top_n && i < ALPHABET_SIZE; i++) {
+        printf("Key: %2d | Score: %.2f | Text: %s\n", candidates[i].key, candidates[i].score, candidates[i].plaintext);
+    }
+    
+    return 0;
+}

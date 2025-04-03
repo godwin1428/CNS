@@ -1,0 +1,71 @@
+35. Write a C program for one-time pad version of the Vigenère cipher. In this scheme, the key is a  
+stream of random numbers between 0 and 26. For example, if the key is 3 19 5 . . . , then the first letter of  
+plaintext is encrypted with a shift of 3 letters, the second with a shift of 19 letters, the third with a shift of 
+5 letters, and so on. 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+#define MAX_LEN 100
+
+// Function to generate a random key stream
+void generate_key(int key[], int length) {
+    for (int i = 0; i < length; i++)
+        key[i] = rand() % 26;  // Random numbers between 0 and 25
+}
+
+// Encrypt function (One-Time Pad Vigenère)
+void encrypt(char plaintext[], char ciphertext[], int key[], int length) {
+    for (int i = 0; i < length; i++) {
+        if (plaintext[i] >= 'A' && plaintext[i] <= 'Z')
+            ciphertext[i] = ((plaintext[i] - 'A' + key[i]) % 26) + 'A';
+        else if (plaintext[i] >= 'a' && plaintext[i] <= 'z')
+            ciphertext[i] = ((plaintext[i] - 'a' + key[i]) % 26) + 'a';
+        else
+            ciphertext[i] = plaintext[i];  // Keep non-alphabet characters unchanged
+    }
+    ciphertext[length] = '\0';
+}
+
+// Decrypt function
+void decrypt(char ciphertext[], char decrypted[], int key[], int length) {
+    for (int i = 0; i < length; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z')
+            decrypted[i] = ((ciphertext[i] - 'A' - key[i] + 26) % 26) + 'A';
+        else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z')
+            decrypted[i] = ((ciphertext[i] - 'a' - key[i] + 26) % 26) + 'a';
+        else
+            decrypted[i] = ciphertext[i];  // Keep non-alphabet characters unchanged
+    }
+    decrypted[length] = '\0';
+}
+
+// Print key stream
+void print_key(int key[], int length) {
+    printf("Key Stream: ");
+    for (int i = 0; i < length; i++)
+        printf("%d ", key[i]);
+    printf("\n");
+}
+
+int main() {
+    srand(time(NULL));  // Seed for random number generation
+
+    char plaintext[MAX_LEN] = "HELLO";  // Predefined input
+    char ciphertext[MAX_LEN], decrypted[MAX_LEN];
+    int key[MAX_LEN];
+
+    int length = strlen(plaintext);
+    generate_key(key, length);
+    encrypt(plaintext, ciphertext, key, length);
+    decrypt(ciphertext, decrypted, key, length);
+
+    printf("Plaintext: %s\n", plaintext);
+    print_key(key, length);
+    printf("Ciphertext: %s\n", ciphertext);
+    printf("Decrypted: %s\n", decrypted);
+
+    return 0;
+}

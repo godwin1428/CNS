@@ -1,0 +1,64 @@
+31. Write a C program for subkey generation in CMAC, it states that the block cipher is applied to the  
+block that consists entirely of 0 bits. The first subkey is derived from the resulting string by a left shift of  
+one bit and, conditionally, by XORing a constant that depends on the block size. The second subkey is  
+derived in the same manner from the first subkey.  
+a. What constants are needed for block sizes of 64 and 128 bits?   
+b. How the left shift and XOR accomplishes the desired result.  
+
+#include <stdio.h>
+#include <string.h>
+
+#define BLOCK_SIZE 16 // Set to 8 for 64-bit, 16 for 128-bit
+
+// Constants for CMAC subkey generation
+#if BLOCK_SIZE == 8
+    #define R_CONST 0x1B  // Constant for 64-bit block
+#elif BLOCK_SIZE == 16
+    #define R_CONST 0x87  // Constant for 128-bit block
+#endif
+
+// Simulated block cipher encryption (for real implementation, use AES)
+void block_cipher_encrypt(unsigned char *out, unsigned char *in) {
+    // For demo, return a fixed pseudo-random block (normally AES(key, in))
+    for (int i = 0; i < BLOCK_SIZE; i++) out[i] = in[i] ^ 0xAA;
+}
+
+// Left shift by 1 bit and XOR with R_CONST if carry occurs
+void generate_subkey(unsigned char *subkey, unsigned char *L) {
+    unsigned char carry = (L[0] & 0x80) ? 1 : 0;
+
+    // Left shift by 1 bit
+    for (int i = 0; i < BLOCK_SIZE - 1; i++)
+        subkey[i] = (L[i] << 1) | (L[i + 1] >> 7);
+    subkey[BLOCK_SIZE - 1] = (L[BLOCK_SIZE - 1] << 1);
+
+    // Apply XOR with R_CONST if carry occurred
+    if (carry) subkey[BLOCK_SIZE - 1] ^= R_CONST;
+}
+
+int main() {
+    unsigned char L[BLOCK_SIZE] = {0}; // Initial block (all zero)
+    unsigned char K1[BLOCK_SIZE], K2[BLOCK_SIZE];
+
+    // Encrypt the zero block
+    block_cipher_encrypt(L, L);
+
+    // Generate K1 and K2
+    generate_subkey(K1, L);
+    generate_subkey(K2, K1);
+
+    // Print results
+    printf("L  = ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X ", L[i]);
+    printf("\n");
+
+    printf("K1 = ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X ", K1[i]);
+    printf("\n");
+
+    printf("K2 = ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X ", K2[i]);
+    printf("\n");
+
+    return 0;
+}

@@ -1,0 +1,76 @@
+16.Write a C program that can perform a letter frequency attack on any monoalphabetic substitution  
+cipher without human intervention. Your software should produce possible plaintexts in rough order of  
+likelihood. It would be good if your user interface allowed the user to specify “give me the top 10  
+possible plaintexts.” 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ALPHABET_SIZE 26
+#define MAX_TEXT 1000
+
+// English letter frequency (approximate percentages)
+double english_freq[ALPHABET_SIZE] = {8.2, 1.5, 2.8, 4.3, 13.0, 2.2, 2.0, 6.1, 7.0, 0.2, 0.8, 
+                                      4.0, 2.4, 6.7, 7.5, 1.9, 0.1, 6.0, 6.3, 9.1, 2.8, 1.0, 
+                                      2.4, 0.2, 2.0, 0.1};
+
+// Function to count letter frequencies in ciphertext
+void count_frequencies(char *text, int *freq) {
+    int i;
+    for (i = 0; text[i] != '\0'; i++) {
+        if (text[i] >= 'A' && text[i] <= 'Z') freq[text[i] - 'A']++;
+        else if (text[i] >= 'a' && text[i] <= 'z') freq[text[i] - 'a']++;
+    }
+}
+
+// Function to sort mappings based on frequency
+void sort_by_frequency(int *freq, char *mapping) {
+    int i, j, temp;
+    char temp_char;
+    
+    for (i = 0; i < ALPHABET_SIZE - 1; i++) {
+        for (j = i + 1; j < ALPHABET_SIZE; j++) {
+            if (freq[i] < freq[j]) {
+                temp = freq[i];
+                freq[i] = freq[j];
+                freq[j] = temp;
+                
+                temp_char = mapping[i];
+                mapping[i] = mapping[j];
+                mapping[j] = temp_char;
+            }
+        }
+    }
+}
+
+// Function to decrypt the text based on frequency analysis
+void decrypt(char *ciphertext, char *mapping) {
+    int i;
+    for (i = 0; ciphertext[i] != '\0'; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z')
+            ciphertext[i] = mapping[ciphertext[i] - 'A'];
+        else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z')
+            ciphertext[i] = mapping[ciphertext[i] - 'a'] + 32;
+    }
+}
+
+int main() {
+    char ciphertext[MAX_TEXT] = "Gsrh rh z hvxivg nvhhztv!";
+    int freq[ALPHABET_SIZE] = {0};
+    char mapping[ALPHABET_SIZE] = "ETAOINSHRDLCUMWFGYPBVKJXQZ"; // Most common letter order
+    
+    // Count letter frequencies
+    count_frequencies(ciphertext, freq);
+    
+    // Sort based on frequency
+    sort_by_frequency(freq, mapping);
+
+    // Decrypt the text
+    decrypt(ciphertext, mapping);
+    
+    // Print the possible plaintext
+    printf("Possible Decryption: %s\n", ciphertext);
+    
+    return 0;
+}

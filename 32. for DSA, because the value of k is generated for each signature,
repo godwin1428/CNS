@@ -1,0 +1,84 @@
+32. Write a C program for DSA, because the value of k is generated for each signature, even if the same  
+message is signed twice on different occasions, the signatures will differ. This is not true of RSA  
+signatures. Write a C program for implication of this difference? 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define P 23   // Prime number
+#define Q 11   // Prime divisor of P-1
+#define G 2    // Generator
+
+// Function to calculate (base^exp) % mod
+int mod_exp(int base, int exp, int mod) {
+    int result = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+// Function to compute modular inverse using extended Euclidean algorithm
+int mod_inverse(int a, int m) {
+    int m0 = m, t, q;
+    int x0 = 0, x1 = 1;
+    if (m == 1) return 0;
+    while (a > 1) {
+        q = a / m;
+        t = m;
+        m = a % m, a = t;
+        t = x0;
+        x0 = x1 - q * x0;
+        x1 = t;
+    }
+    if (x1 < 0) x1 += m0;
+    return x1;
+}
+
+// Function to generate a DSA signature
+void dsa_sign(int message, int x, int *r, int *s) {
+    int k, k_inv;
+    
+    do {
+        k = (rand() % (Q - 1)) + 1; // Random k (1 < k < Q)
+        *r = mod_exp(G, k, P) % Q;  // r = (g^k mod p) mod q
+    } while (*r == 0);
+
+    k_inv = mod_inverse(k, Q);  // Compute k^(-1) mod q
+    *s = (k_inv * (message + x * (*r))) % Q; // s = k^(-1) * (msg + x*r) mod q
+}
+
+// Function to simulate RSA signing (same result for same message)
+int rsa_sign(int message, int d, int n) {
+    return mod_exp(message, d, n);  // Signature = msg^d mod n
+}
+
+int main() {
+    srand(time(0));
+
+    int message = 10; // Example message
+    int x = 7; // Private key for DSA
+    int y = mod_exp(G, x, P); // Public key for DSA
+    int r1, s1, r2, s2;
+
+    // Generate two different DSA signatures for the same message
+    dsa_sign(message, x, &r1, &s1);
+    dsa_sign(message, x, &r2, &s2);
+
+    printf("Message: %d\n", message);
+    printf("DSA Signature 1: (r1, s1) = (%d, %d)\n", r1, s1);
+    printf("DSA Signature 2: (r2, s2) = (%d, %d)\n", r2, s2);
+
+    // RSA Example (Private key = 7, Public key n = 33)
+    int rsa_private = 7, rsa_modulus = 33;
+    int rsa_sig1 = rsa_sign(message, rsa_private, rsa_modulus);
+    int rsa_sig2 = rsa_sign(message, rsa_private, rsa_modulus);
+
+    printf("\nRSA Signature 1: %d\n", rsa_sig1);
+    printf("RSA Signature 2: %d\n", rsa_sig2);
+
+    return 0;
+}

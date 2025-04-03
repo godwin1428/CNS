@@ -1,0 +1,66 @@
+36. Write a C program for Caesar cipher, known as the affine Caesar cipher, has the following form: For  
+each plaintext letter p, substitute the ciphertext letter C: C = E([a, b], p) = (ap + b) mod 26 A basic  
+requirement of any encryption algorithm is that it be one-to-one. That is, if p q, then E(k, p) E(k, q).  
+Otherwise, decryption is impossible, because more than one plaintext character maps into the same  
+ciphertext character. The affine Caesar cipher is not one-to-one for all values of a. For example, for a = 2  
+and b = 3, then E([a, b], 0) = E([a, b], 13) = 3. 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Function to find modular inverse of 'a' under mod 26
+int mod_inverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++)
+        if ((a * x) % m == 1)
+            return x;
+    return -1; // No modular inverse (invalid a)
+}
+
+// Encrypt function: C = (a * P + b) % 26
+void encrypt(char plaintext[], char ciphertext[], int a, int b) {
+    for (int i = 0; plaintext[i] != '\0'; i++) {
+        if (plaintext[i] >= 'A' && plaintext[i] <= 'Z')
+            ciphertext[i] = ((a * (plaintext[i] - 'A') + b) % 26) + 'A';
+        else if (plaintext[i] >= 'a' && plaintext[i] <= 'z')
+            ciphertext[i] = ((a * (plaintext[i] - 'a') + b) % 26) + 'a';
+        else
+            ciphertext[i] = plaintext[i];  // Preserve spaces and symbols
+    }
+    ciphertext[strlen(plaintext)] = '\0';
+}
+
+// Decrypt function: P = a⁻¹ * (C - b) % 26
+void decrypt(char ciphertext[], char decrypted[], int a, int b) {
+    int a_inv = mod_inverse(a, 26);
+    if (a_inv == -1) {
+        printf("Error: 'a' must be coprime with 26!\n");
+        exit(1);
+    }
+
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z')
+            decrypted[i] = ((a_inv * (ciphertext[i] - 'A' - b + 26)) % 26) + 'A';
+        else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z')
+            decrypted[i] = ((a_inv * (ciphertext[i] - 'a' - b + 26)) % 26) + 'a';
+        else
+            decrypted[i] = ciphertext[i];  // Preserve spaces and symbols
+    }
+    decrypted[strlen(ciphertext)] = '\0';
+}
+
+int main() {
+    char plaintext[] = "HELLO WORLD";
+    char ciphertext[100], decrypted[100];
+    int a = 5, b = 8; // 'a' must be coprime with 26
+
+    encrypt(plaintext, ciphertext, a, b);
+    decrypt(ciphertext, decrypted, a, b);
+
+    printf("Plaintext: %s\n", plaintext);
+    printf("Ciphertext: %s\n", ciphertext);
+    printf("Decrypted: %s\n", decrypted);
+
+    return 0;
+}

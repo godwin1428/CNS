@@ -1,0 +1,71 @@
+12. a. Write a C program to Encrypt the message “meet me at the usual place at ten rather than eight  
+oclock” using the Hill cipher with the key.  
+   
+ 9 4  
+ 5 7  
+a. Show your calculations and the result.  
+b. Show the calculations for the corresponding decryption of the ciphertext to recover the original  
+plaintext. 
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MOD 26
+
+// Hill Cipher Key Matrix
+int key[2][2]={{9,4},{5,7}};
+int inverse_key[2][2]={{7,-4},{-5,9}}; // Modular inverse of key matrix modulo 26
+
+// Function to convert characters to numbers (A=0, B=1, ..., Z=25)
+void text_to_numbers(char *text,int *numbers,int length){
+	int i;
+	for(i=0;i<length;i++){
+		numbers[i]=text[i]-'A';
+	}
+}
+
+// Function to encrypt using Hill Cipher
+void hill_encrypt(int *plaintext,int *ciphertext,int length){
+	int i;
+	for(i=0;i<length;i+=2){
+		ciphertext[i]=(key[0][0]*plaintext[i]+key[0][1]*plaintext[i+1])%MOD;
+		ciphertext[i+1]=(key[1][0]*plaintext[i]+key[1][1]*plaintext[i+1])%MOD;
+	}
+}
+
+// Function to decrypt using Hill Cipher
+void hill_decrypt(int *ciphertext,int *decrypted,int length){
+	int i;
+	for(i=0;i<length;i+=2){
+		decrypted[i]=(inverse_key[0][0]*ciphertext[i]+inverse_key[0][1]*ciphertext[i+1])%MOD;
+		if(decrypted[i]<0)decrypted[i]+=MOD;
+		decrypted[i+1]=(inverse_key[1][0]*ciphertext[i]+inverse_key[1][1]*ciphertext[i+1])%MOD;
+		if(decrypted[i+1]<0)decrypted[i+1]+=MOD;
+	}
+}
+
+// Function to print text
+void print_text(int *text,int length,const char *label){
+	int i;
+	printf("%s: ",label);
+	for(i=0;i<length;i++){
+		printf("%c",text[i]+'A');
+	}
+	printf("\n");
+}
+
+int main(){
+	char message[]="MEETMEATTHEUSUALPLACEATTENRATHERTHANEIGHTOCLOCK";
+	int length=strlen(message);
+	int plaintext[length],ciphertext[length],decrypted[length];
+
+	text_to_numbers(message,plaintext,length);
+	hill_encrypt(plaintext,ciphertext,length);
+	print_text(ciphertext,length,"Ciphertext");
+
+	hill_decrypt(ciphertext,decrypted,length);
+	print_text(decrypted,length,"Decrypted Text");
+
+	return 0;
+}

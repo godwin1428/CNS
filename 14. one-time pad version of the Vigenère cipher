@@ -1,0 +1,49 @@
+14. Write a C program for one-time pad version of the Vigenère cipher. In this scheme, the key is a  
+stream of random numbers between 0 and 26. For example, if the key is 3 19 5 . . . , then the first letter of  
+plaintext is encrypted with a shift of 3 letters, the second with a shift of 19 letters, the third with a shift of 
+5 letters, and so on.  
+a. Encrypt the plaintext send more money with the key stream  
+9 0 1 7 23 15 21 14 11 11 2 8 9  
+b. Using the ciphertext produced in part (a), find a key so that the cipher text decrypts to the plaintext  
+cash not needed. 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MOD 26
+#define MAX_PLAINTEXTS 10
+
+// Function to decrypt using additive cipher
+void additive_decrypt(char *ciphertext, int shift, char *plaintext) {
+    int len = strlen(ciphertext);
+    for (int i = 0; i < len; i++) {
+        if (ciphertext[i] == ' ') {
+            plaintext[i] = ' ';
+        } else {
+            plaintext[i] = ((ciphertext[i] - 'a' - shift + MOD) % MOD) + 'a';
+        }
+    }
+    plaintext[len] = '\0';
+}
+
+// Function to perform letter frequency attack
+void frequency_attack(char *ciphertext, int top_n) {
+    char possible_plaintexts[MAX_PLAINTEXTS][strlen(ciphertext) + 1];
+    
+    for (int shift = 0; shift < top_n; shift++) {
+        additive_decrypt(ciphertext, shift, possible_plaintexts[shift]);
+        printf("Shift %d: %s\n", shift, possible_plaintexts[shift]);
+    }
+}
+
+int main() {
+    char ciphertext[] = "xlmw mw xli txpsvetx xlmw mw";
+    int top_n = 10;
+    
+    printf("Performing letter frequency attack...\n");
+    frequency_attack(ciphertext, top_n);
+    
+    return 0;
+}

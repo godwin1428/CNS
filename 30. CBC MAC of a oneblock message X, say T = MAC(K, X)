@@ -1,0 +1,74 @@
+30.Write a C program for CBC MAC of a oneblock message X, say T = MAC(K, X), the adversary  
+immediately knows the CBC MAC for the two-block message X || (X ⊕ T) since this is once again.  
+
+#include <stdio.h>
+#include <string.h>
+
+#define BLOCK_SIZE 16
+
+// Simple XOR encryption (substituting AES for demonstration)
+void simple_encrypt(unsigned char *out, unsigned char *in, unsigned char *key) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        out[i] = in[i] ^ key[i];
+    }
+}
+
+// XOR two blocks
+void xor_blocks(unsigned char *out, unsigned char *a, unsigned char *b) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        out[i] = a[i] ^ b[i];
+    }
+}
+
+// Compute CBC-MAC (using simple XOR-based encryption)
+void cbc_mac(unsigned char *key, unsigned char *message, int message_len, unsigned char *mac) {
+    unsigned char iv[BLOCK_SIZE] = {0}; // IV = 0
+    unsigned char block[BLOCK_SIZE];
+
+    for (int i = 0; i < message_len; i += BLOCK_SIZE) {
+        xor_blocks(block, message + i, iv);
+        simple_encrypt(iv, block, key); // "Encrypt" block
+    }
+
+    memcpy(mac, iv, BLOCK_SIZE); // Last block = MAC
+}
+
+int main() {
+    unsigned char key[BLOCK_SIZE] = "mysecretkey12345";  // Example key
+    unsigned char X[BLOCK_SIZE] = "Attack now!"; // One-block message (padded)
+    unsigned char T[BLOCK_SIZE]; // MAC of X
+
+    // Compute CBC-MAC of X
+    cbc_mac(key, X, BLOCK_SIZE, T);
+
+    // Construct second block: X ⊕ T
+    unsigned char X_xor_T[BLOCK_SIZE];
+    xor_blocks(X_xor_T, X, T);
+
+    // Compute CBC-MAC of X || (X ⊕ T)
+    unsigned char forged_mac[BLOCK_SIZE];
+    unsigned char forged_message[2 * BLOCK_SIZE];
+    
+    memcpy(forged_message, X, BLOCK_SIZE);
+    memcpy(forged_message + BLOCK_SIZE, X_xor_T, BLOCK_SIZE);
+
+    cbc_mac(key, forged_message, 2 * BLOCK_SIZE, forged_mac);
+
+    // Print results
+    printf("Original MAC (T): ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02x ", T[i]);
+    printf("\n");
+
+    printf("Forged MAC: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02x ", forged_mac[i]);
+    printf("\n");
+
+    // Verify attack success
+    if (memcmp(T, forged_mac, BLOCK_SIZE) == 0) {
+        printf("Attack successful! Forged MAC is valid.\n");
+    } else {
+        printf("Attack failed.\n");
+    }
+
+    return 0;
+}

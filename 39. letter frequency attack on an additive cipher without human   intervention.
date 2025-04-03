@@ -1,0 +1,91 @@
+39.Write a C program that can perform a letter frequency attack on an additive cipher without human  
+intervention. Your software should produce possible plaintexts in rough order of likelihood. It would be  
+good if your user interface allowed the user to specify “give me the top 10 possible plaintexts.”  
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define ALPHABET_SIZE 26
+#define MAX_TEXT_SIZE 1000
+
+// English letter frequencies (relative proportions in a typical text)
+double letter_frequencies[ALPHABET_SIZE] = {
+    8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094,
+    6.966, 0.153, 0.772, 4.025, 2.406, 6.749, 7.507, 1.929,
+    0.095, 5.987, 6.327, 9.056, 2.758, 0.978, 2.360, 0.150,
+    1.974, 0.074
+};
+
+// Function to decrypt using a given shift
+void decrypt_caesar(char *ciphertext, char *plaintext, int shift) {
+    int i;
+    for (i = 0; ciphertext[i] != '\0'; i++) {
+        if (isalpha(ciphertext[i])) {
+            char base = isupper(ciphertext[i]) ? 'A' : 'a';
+            plaintext[i] = ((ciphertext[i] - base - shift + ALPHABET_SIZE) % ALPHABET_SIZE) + base;
+        } else {
+            plaintext[i] = ciphertext[i]; // Keep non-alphabetic characters unchanged
+        }
+    }
+    plaintext[i] = '\0';
+}
+
+// Function to score a plaintext based on letter frequency
+double score_text(char *plaintext) {
+    double score = 0;
+    int i;
+    for (i = 0; plaintext[i] != '\0'; i++) {
+        if (isalpha(plaintext[i])) {
+            char lower = tolower(plaintext[i]);
+            score += letter_frequencies[lower - 'a'];
+        }
+    }
+    return score;
+}
+
+// Structure to store shift results
+typedef struct {
+    int shift;
+    char plaintext[MAX_TEXT_SIZE];
+    double score;
+} ShiftResult;
+
+// Function to sort shift results by score
+void sort_results(ShiftResult results[], int size) {
+    int i, j;
+    for (i = 0; i < size - 1; i++) {
+        for (j = 0; j < size - i - 1; j++) {
+            if (results[j].score < results[j + 1].score) {
+                ShiftResult temp = results[j];
+                results[j] = results[j + 1];
+                results[j + 1] = temp;
+            }
+        }
+    }
+}
+
+int main() {
+    // Hardcoded ciphertext (encrypted with an unknown shift)
+    char ciphertext[] = "Zol sly dpao h jvkl!";
+    
+    ShiftResult results[ALPHABET_SIZE];
+
+    // Try all 26 shifts
+    for (int shift = 0; shift < ALPHABET_SIZE; shift++) {
+        decrypt_caesar(ciphertext, results[shift].plaintext, shift);
+        results[shift].shift = shift;
+        results[shift].score = score_text(results[shift].plaintext);
+    }
+
+    // Sort results by score (higher scores are better)
+    sort_results(results, ALPHABET_SIZE);
+
+    // Print the top 10 likely plaintexts
+    printf("Top 10 Possible Plaintexts:\n");
+    for (int i = 0; i < 10; i++) {
+        printf("Shift %d: %s\n", results[i].shift, results[i].plaintext);
+    }
+
+    return 0;
+}

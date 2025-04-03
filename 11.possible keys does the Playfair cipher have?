@@ -1,0 +1,21 @@
+11. Write a C program for possible keys does the Playfair cipher have? Ignore the fact that some keys  
+might produce identical encryption results. Express your answer as an approximate power of 2. 
+
+#include <stdio.h>
+#include <math.h>
+
+double log2_factorial(int n) {
+    double sum = 0;
+    int i;
+    for (i = 2; i <= n; i++) {
+        sum += log2(i);
+    }
+    return sum;
+}
+
+int main() {
+    int letters = 25;
+    double log2_keyspace = log2_factorial(letters);
+    printf("Approximate keyspace: 2^%.0f\n", log2_keyspace);
+    return 0;
+}

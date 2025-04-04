@@ -1,0 +1,109 @@
+26.Write a C program for RSA public-key encryption scheme, each user has a public key, e, and a  
+private key, d. Suppose Bob leaks his private key. Rather than generating a new modulus, he decides to  
+generate a new public and a new private key. Is this safe?  
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <math.h>
+
+#define BLOCK_SIZE 8
+
+// Function to compute the greatest common divisor (GCD)
+int gcd(int a, int b) {
+    while (b != 0) {
+        int temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return a;
+}
+
+// Function to compute modular inverse using Extended Euclidean Algorithm
+int mod_inverse(int e, int phi) {
+    int t = 0, new_t = 1;
+    int r = phi, new_r = e;
+    while (new_r != 0) {
+        int quotient = r / new_r;
+        int temp = t;
+        t = new_t;
+        new_t = temp - quotient * new_t;
+        temp = r;
+        r = new_r;
+        new_r = temp - quotient * new_r;
+    }
+    if (r > 1) return -1; // No modular inverse exists
+    if (t < 0) t += phi;
+    return t;
+}
+
+// Function to perform modular exponentiation (a^b mod m)
+int mod_exp(int base, int exp, int mod) {
+    int result = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+int main() {
+    int n = 3599;
+    int e = 31;
+    int plaintext_block = 1729; // Assume an attacker knows this block has a common factor with n
+    
+    // Step 1: Compute GCD to find a factor of n
+    int factor = gcd(plaintext_block, n);
+    if (factor == 1 || factor == n) {
+        printf("No useful factor found. Attack failed.\n");
+        return 1;
+    }
+    
+    // Step 2: Compute the other prime factor
+    int p = factor;
+    int q = n / p;
+    
+    // Step 3: Compute φ(n)
+    int phi_n = (p - 1) * (q - 1);
+    
+    // Step 4: Compute private key d
+    int d = mod_inverse(e, phi_n);
+    
+    printf("Public Key: (e=%d, n=%d)\n", e, n);
+    printf("Private Key: d=%d\n", d);
+    printf("Prime factors: p=%d, q=%d\n", p, q);
+    printf("Euler's Totient (phi(n))=%d\n", phi_n);
+    
+    // Demonstrating RSA Encryption of single characters
+    char message[] = "HELLO";
+    int encrypted[5];
+    
+    printf("Original Message: %s\n", message);
+    
+    // Encrypt each letter
+    for (int i = 0; i < 5; i++) {
+        int m = message[i] - 'A'; // Convert to number 0-25
+        encrypted[i] = mod_exp(m, e, n);
+        printf("Encrypted %c -> %d\n", message[i], encrypted[i]);
+    }
+    
+    // Brute-force Decryption Attack
+    printf("Brute-force Decryption:\n");
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 26; j++) {
+            if (mod_exp(j, e, n) == encrypted[i]) {
+                printf("Decrypted %d -> %c\n", encrypted[i], 'A' + j);
+                break;
+            }
+        }
+    }
+    
+    // Security Analysis
+    printf("If Bob leaks his private key, generating a new (e, d) pair with the same n is not safe.\n");
+    printf("An attacker who knows d can factorize n, compromising security. A new modulus should be generated.\n");
+    printf("Encrypting each letter separately is insecure because of frequency analysis attacks.\n");
+    
+    return 0;
+}

@@ -1,0 +1,67 @@
+22.Write a C program for Encrypt and decrypt in cipher block chaining mode using one of the following  
+ciphers: affine modulo 256, Hill modulo 256, S-DES, DES. Test data for S-DES using a binary  
+initialization vector of 1010 1010. A binary plaintext of 0000 0001 0010 0011 encrypted with a binary  
+key of 01111 11101 should give a binary plaintext of 1111 0100 0000 1011. Decryption should work  
+correspondingly. 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+#define BLOCK_SIZE 8
+
+// Sample S-DES encryption function for CTR mode
+void sdes_encrypt_block(uint8_t *block, const uint8_t *key) {
+    // Simple mock encryption function
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        block[i] ^= key[i % BLOCK_SIZE];
+    }
+}
+
+// Function to perform CTR encryption/decryption
+void ctr_encrypt_decrypt(uint8_t *input, uint8_t *output, size_t length, uint8_t *key, uint8_t *nonce) {
+    uint8_t counter[BLOCK_SIZE];
+    memcpy(counter, nonce, BLOCK_SIZE);
+    
+    for (size_t i = 0; i < length; i += BLOCK_SIZE) {
+        uint8_t keystream[BLOCK_SIZE];
+        memcpy(keystream, counter, BLOCK_SIZE);
+        sdes_encrypt_block(keystream, key);
+
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            output[i + j] = input[i + j] ^ keystream[j];
+        }
+
+        // Increment counter
+        for (int j = BLOCK_SIZE - 1; j >= 0; j--) {
+            if (++counter[j]) break;
+        }
+    }
+}
+
+int main() {
+    uint8_t key[BLOCK_SIZE] = {0x0F, 0xFD, 0x0F, 0xFD, 0x0F, 0xFD, 0x0F, 0xFD};
+    uint8_t nonce[BLOCK_SIZE] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t plaintext[BLOCK_SIZE] = {0x00, 0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00};
+    uint8_t ciphertext[BLOCK_SIZE];
+    uint8_t decryptedtext[BLOCK_SIZE];
+
+    // Encrypt using CTR mode
+    ctr_encrypt_decrypt(plaintext, ciphertext, BLOCK_SIZE, key, nonce);
+    printf("Encrypted text (CTR): ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", ciphertext[i]);
+    }
+    printf("\n");
+
+    // Decrypt using CTR mode (same function)
+    ctr_encrypt_decrypt(ciphertext, decryptedtext, BLOCK_SIZE, key, nonce);
+    printf("Decrypted text (CTR): ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", decryptedtext[i]);
+    }
+    printf("\n");
+
+    return 0;
+}

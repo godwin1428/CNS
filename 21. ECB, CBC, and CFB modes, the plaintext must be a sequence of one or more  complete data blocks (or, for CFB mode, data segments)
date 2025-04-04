@@ -1,0 +1,87 @@
+21.Write a C program for ECB, CBC, and CFB modes, the plaintext must be a sequence of one or more 
+complete data blocks (or, for CFB mode, data segments). In other words, for these three modes, the total  
+number of bits in the plaintext must be a positive multiple of the block (or segment) size. One common  
+method of padding, if needed, consists of a 1 bit followed by as few zero bits, possibly none, as are  
+necessary to complete the final block. It is considered good practice for the sender to pad every message,  
+including messages in which the final message block is already complete. What is the motivation for  
+including a padding block when padding is not needed?  
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+#define BLOCK_SIZE 8
+
+// Sample S-DES encryption function for CBC mode
+void sdes_encrypt_block(uint8_t *block, const uint8_t *key) {
+    // Simple mock encryption function
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        block[i] ^= key[i % BLOCK_SIZE];
+    }
+}
+
+// Sample S-DES decryption function for CBC mode
+void sdes_decrypt_block(uint8_t *block, const uint8_t *key) {
+    // Simple mock decryption function (same as encryption in XOR-based ciphers)
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        block[i] ^= key[i % BLOCK_SIZE];
+    }
+}
+
+// Function to perform CBC encryption
+void cbc_encrypt(uint8_t *plaintext, uint8_t *ciphertext, size_t length, uint8_t *key, uint8_t *iv) {
+    uint8_t prev_ciphertext[BLOCK_SIZE];
+    memcpy(prev_ciphertext, iv, BLOCK_SIZE);
+
+    for (size_t i = 0; i < length; i += BLOCK_SIZE) {
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            plaintext[i + j] ^= prev_ciphertext[j];
+        }
+        sdes_encrypt_block(&plaintext[i], key);
+        memcpy(&ciphertext[i], &plaintext[i], BLOCK_SIZE);
+        memcpy(prev_ciphertext, &ciphertext[i], BLOCK_SIZE);
+    }
+}
+
+// Function to perform CBC decryption
+void cbc_decrypt(uint8_t *ciphertext, uint8_t *plaintext, size_t length, uint8_t *key, uint8_t *iv) {
+    uint8_t prev_ciphertext[BLOCK_SIZE];
+    memcpy(prev_ciphertext, iv, BLOCK_SIZE);
+
+    for (size_t i = 0; i < length; i += BLOCK_SIZE) {
+        uint8_t temp[BLOCK_SIZE];
+        memcpy(temp, &ciphertext[i], BLOCK_SIZE);
+        sdes_decrypt_block(&ciphertext[i], key);
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            plaintext[i + j] = ciphertext[i + j] ^ prev_ciphertext[j];
+        }
+        memcpy(prev_ciphertext, temp, BLOCK_SIZE);
+    }
+}
+
+int main() {
+    uint8_t key[BLOCK_SIZE] = {0x0F, 0xFD, 0x0F, 0xFD, 0x0F, 0xFD, 0x0F, 0xFD};
+    uint8_t iv[BLOCK_SIZE] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA};
+    uint8_t plaintext[BLOCK_SIZE] = {0x00, 0x01, 0x12, 0x23, 0x00, 0x00, 0x00, 0x00};
+    uint8_t ciphertext[BLOCK_SIZE];
+    uint8_t decryptedtext[BLOCK_SIZE];
+
+    // Encrypt using CBC mode
+    cbc_encrypt(plaintext, ciphertext, BLOCK_SIZE, key, iv);
+    printf("Encrypted text (CBC): ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", ciphertext[i]);
+    }
+    printf("\n");
+
+    // Decrypt using CBC mode
+    cbc_decrypt(ciphertext, decryptedtext, BLOCK_SIZE, key, iv);
+    printf("Decrypted text (CBC): ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", decryptedtext[i]);
+    }
+    printf("\n");
+
+    return 0;
+}

@@ -1,0 +1,55 @@
+18.  Write a C program for DES the first 24 bits of each subkey come from the same subset of 28 bits of  
+the initial key and that the second 24 bits of each subkey come from a disjoint subset of 28 bits of the  
+initial key. 
+
+#include <stdio.h>
+#include <stdint.h>
+
+// DES Key Schedule - Generate subkeys from a 56-bit key
+void generate_subkeys(uint64_t key, uint32_t subkeys[16][2]) {
+    // Initial permutation choice to select 56 bits from the 64-bit key
+    static const int PC1[56] = {
+        57,49,41,33,25,17,9, 1,58,50,42,34,26,18,
+        10,2,59,51,43,35,27,19,11,3,60,52,44,36,
+        63,55,47,39,31,23,15,7,62,54,46,38,30,22,
+        14,6,61,53,45,37,29,21,13,5,28,20,12,4
+    };
+    
+    // Left shifts for each round
+    static const int shifts[16] = {1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1};
+    
+    uint32_t C = 0, D = 0;
+    
+    // Apply PC1 to get 56-bit key (split into C and D)
+    for (int i = 0; i < 28; i++) {
+        C |= ((key >> (64 - PC1[i])) & 1) << (27 - i);
+        D |= ((key >> (64 - PC1[i + 28])) & 1) << (27 - i);
+    }
+    
+    for (int round = 0; round < 16; round++) {
+        // Left shifts
+        C = ((C << shifts[round]) | (C >> (28 - shifts[round]))) & 0x0FFFFFFF;
+        D = ((D << shifts[round]) | (D >> (28 - shifts[round]))) & 0x0FFFFFFF;
+        
+        // Split into two 24-bit parts
+        subkeys[round][0] = C & 0xFFFFFF; // First 24 bits
+        subkeys[round][1] = D & 0xFFFFFF; // Second 24 bits
+    }
+}
+
+// Print subkeys
+void print_subkeys(uint32_t subkeys[16][2]) {
+    for (int i = 0; i < 16; i++) {
+        printf("Round %2d: %06X %06X\n", i + 1, subkeys[i][0], subkeys[i][1]);
+    }
+}
+
+int main() {
+    uint64_t key = 0x133457799BBCDFF1; // Example 64-bit key
+    uint32_t subkeys[16][2];
+    
+    generate_subkeys(key, subkeys);
+    print_subkeys(subkeys);
+    
+    return 0;
+}

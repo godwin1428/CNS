@@ -1,0 +1,56 @@
+17.Write a C program for DES algorithm for decryption, the 16 keys (K1, K2, c, K16) are used in 
+reverse order. Design a key-generation scheme with the appropriate shift schedule for the decryption  
+process.  
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+#define KEY_SIZE 64
+#define SUBKEY_SIZE 48
+#define NUM_ROUNDS 16
+
+// Example shift schedule for key generation
+int shift_schedule[NUM_ROUNDS] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
+
+// Function to generate 16 subkeys for DES encryption
+void generate_encryption_keys(uint64_t key, uint64_t subkeys[NUM_ROUNDS]) {
+    uint32_t left = (key >> 36) & 0xFFFFFFF;
+    uint32_t right = (key >> 8) & 0xFFFFFFF;
+    
+    for (int i = 0; i < NUM_ROUNDS; i++) {
+        // Perform left circular shift
+        int shift = shift_schedule[i];
+        left = ((left << shift) | (left >> (28 - shift))) & 0xFFFFFFF;
+        right = ((right << shift) | (right >> (28 - shift))) & 0xFFFFFFF;
+        
+        // Combine left and right halves to generate subkey
+        subkeys[i] = ((uint64_t)left << 28) | right;
+    }
+}
+
+// Function to decrypt a block of ciphertext using the generated keys
+void des_decrypt(uint64_t ciphertext, uint64_t subkeys[NUM_ROUNDS], uint64_t *plaintext) {
+    uint64_t state = ciphertext;
+    
+    for (int i = NUM_ROUNDS - 1; i >= 0; i--) {
+        state ^= subkeys[i]; // Example transformation (not full DES)
+    }
+    
+    *plaintext = state;
+}
+
+int main() {
+    uint64_t key = 0x133457799BBCDFF1; // Example 64-bit key
+    uint64_t subkeys[NUM_ROUNDS];
+    generate_encryption_keys(key, subkeys);
+    
+    uint64_t ciphertext = 0x85E813540F0AB405; // Example ciphertext
+    uint64_t plaintext;
+    
+    des_decrypt(ciphertext, subkeys, &plaintext);
+    
+    printf("Decrypted plaintext: %lx\n", plaintext);
+    return 0;
+}

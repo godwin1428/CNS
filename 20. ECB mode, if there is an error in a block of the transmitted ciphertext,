@@ -1,0 +1,56 @@
+20. Write a C program for ECB mode, if there is an error in a block of the transmitted ciphertext, only the 
+corresponding plaintext block is affected. However, in the CBC mode, this error propagates. For  
+example, an error in the transmitted C1 obviously corrupts P1 and P2.  
+a. Are any blocks beyond P2 affected?  
+b. Suppose that there is a bit error in the source version of P1. Through how many 
+ciphertext blocks is this error propagated? What is the effect at the receiver? 
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define BLOCK_SIZE 8
+
+// Function to perform padding (1 bit followed by 0s)
+void pad_message(unsigned char *message, size_t *length) {
+    size_t pad_index = *length;
+    message[pad_index++] = 0x80; // 1 bit followed by zeros
+    while (pad_index % BLOCK_SIZE != 0) {
+        message[pad_index++] = 0x00;
+    }
+    *length = pad_index;
+}
+
+// Function to perform 3DES encryption in ECB mode
+void triple_des_ecb_encrypt(const unsigned char *plaintext, unsigned char *ciphertext, const unsigned char *key) {
+    // Encryption logic to be implemented manually
+}
+
+// Function to perform 3DES decryption in ECB mode
+void triple_des_ecb_decrypt(const unsigned char *ciphertext, unsigned char *plaintext, const unsigned char *key) {
+    // Decryption logic to be implemented manually
+}
+
+int main() {
+    unsigned char key[24] = { 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 
+                              0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 
+                              0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37 };
+    unsigned char plaintext[BLOCK_SIZE * 4] = "Encrypt this mes";
+    unsigned char ciphertext[BLOCK_SIZE * 4];
+    unsigned char decryptedtext[BLOCK_SIZE * 4];
+    size_t plaintext_length = strlen((char *)plaintext);
+    
+    // Apply padding
+    pad_message(plaintext, &plaintext_length);
+    
+    // Encrypt in ECB mode
+    triple_des_ecb_encrypt(plaintext, ciphertext, key);
+    printf("Encrypted text (ECB): %s\n", ciphertext);
+    
+    // Decrypt in ECB mode
+    triple_des_ecb_decrypt(ciphertext, decryptedtext, key);
+    printf("Decrypted text (ECB): %s\n", decryptedtext);
+    
+    return 0;
+}

@@ -1,0 +1,59 @@
+23.Write a C program for Encrypt and decrypt in counter mode using one of the following ciphers:  
+affine modulo 256, Hill modulo 256, S-DES. Test data for S-DES using a counter starting at 0000 0000.  
+A binary plaintext of 0000 0001 0000 0010 0000 0100 encrypted with a binary key of 01111 11101  
+should give a binary plaintext of 0011 1000 0100 1111 0011 0010. Decryption should work  
+correspondingly. 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <math.h>
+
+#define BLOCK_SIZE 8
+
+// Function to compute modular inverse using Extended Euclidean Algorithm
+int mod_inverse(int e, int phi) {
+    int t = 0, new_t = 1;
+    int r = phi, new_r = e;
+    while (new_r != 0) {
+        int quotient = r / new_r;
+        int temp = t;
+        t = new_t;
+        new_t = temp - quotient * new_t;
+        temp = r;
+        r = new_r;
+        new_r = temp - quotient * new_r;
+    }
+    if (r > 1) return -1; // No modular inverse exists
+    if (t < 0) t += phi;
+    return t;
+}
+
+int main() {
+    int n = 3599;
+    int e = 31;
+    
+    // Step 1: Factorizing n to find p and q
+    int p, q;
+    for (int i = 2; i <= sqrt(n); i++) {
+        if (n % i == 0) {
+            p = i;
+            q = n / i;
+            break;
+        }
+    }
+    
+    // Step 2: Compute f(n)
+    int phi_n = (p - 1) * (q - 1);
+    
+    // Step 3: Find d (private key)
+    int d = mod_inverse(e, phi_n);
+    
+    printf("Public Key: (e=%d, n=%d)\n", e, n);
+    printf("Private Key: d=%d\n", d);
+    printf("Prime factors: p=%d, q=%d\n", p, q);
+    printf("Euler's Totient (phi(n))=%d\n", phi_n);
+    
+    return 0;
+}
